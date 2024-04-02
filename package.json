@@ -1,0 +1,14 @@
+{
+  "name": "documentation-lint",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "@silverstripe/eslint-config": "^1.1.0",
+    "eslint": "^8.52.0",
+    "eslint-plugin-markdown": "^3.0.1",
+    "js-yaml": "^4.1.0",
+    "markdownlint": "^0.31.1",
+    "markdownlint-cli2": "^0.10.0",
+    "markdownlint-rule-title-case-style": "^0.4.3",
+    "markdownlint-rule-enhanced-proper-names": "^0.0.1"
+  }
+}

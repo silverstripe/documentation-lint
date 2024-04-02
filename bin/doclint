@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+DOCS_LINT_DIR=$(dirname $SCRIPT_DIR)
+ORIG_DIR=$(pwd)
+cd $DOCS_LINT_DIR
+
+# Check we have the necessary binaries installed
+which nvm >/dev/null 2>&1
+if [[ $? == 0 ]]; then
+    # Switch to correct node version
+    nvm use
+else
+    # If nvm isn't installed, node has to be installed and already be the correct version
+    which node >/dev/null 2>&1
+    if [[ $? == 0 ]]; then
+        NVMRC="${DOCS_LINT_DIR}/.nvmrc"
+        NODE_VERSION="$(head -n 1 $NVMRC)"
+        CURRENT_NODE_VERSION="$(node -v)"
+        NODE_VERSION_REGEX="/^v?${NODE_VERSION}(\.[0-9]+\.[0-9]+)?$/"
+        if [[ $CURRENT_NODE_VERSION =~ $NODE_VERSION_REGEX ]]; then
+            echo "nvm must be installed or node must be the correct version (currently ${CURRENT_NODE_VERSION}, needs to be ${NODE_VERSION})"
+            exit 1
+        fi
+    else
+        echo "nvm and node must be installed"
+        exit 1
+    fi
+fi
+which yarn >/dev/null 2>&1
+if [[ $? != 0 ]]; then
+    echo 'yarn must be installed for linting to work'
+    exit 1
+fi
+which getopt >/dev/null 2>&1
+if [[ $? != 0 ]]; then
+    echo 'getopt (enhanced) must be installed to parse CLI flags'
+    exit 1
+fi
+
+# Modern linux should have the enhanced version by default but we should check just in case.
+# Old getopt will exit with 0, new getopt will exit with 4
+getopt --test
+if [[ $? != 4 ]]; then
+    echo 'getopt (enhanced) must be installed to parse CLI flags. You have the non-enhanced version.'
+    exit 1
+fi
+
+# Parse flags
+DO_FIX=0
+WITH_MD=0
+WITH_PHP=0
+WITH_JS=0
+OPTS=$(getopt -o 'fmpj' --long 'fix,with-md,with-php,with-js' -n 'doclint' -- "$@")
+eval set -- "$OPTS"
+# getopt adds a "--" after all of the options it has found,
+# so "while true" is safe because we will always hit that break.
+while true; do
+    case "$1" in
+        '-f'|'--fix')
+            DO_FIX=1
+            shift 1
+            continue
+        ;;
+        '-m'|'--with-md')
+            WITH_MD=1
+            shift 1
+            continue
+        ;;
+        '-p'|'--with-php')
+            WITH_PHP=1
+            shift 1
+            continue
+        ;;
+        '-j'|'--with-js')
+            WITH_JS=1
+            shift 1
+            continue
+        ;;
+        # Anything after "--" on its own can be ignored - it will all be args from here on
+        '--')
+            shift
+            break
+        ;;
+        # This should never be reached (getopt doesn't give us args in this loop) - but throw an error just in case
+        *)
+            echo "Internal error! got '$1'" >&2
+            exit 1
+        ;;
+    esac
+done
+
+# lint everything if we're not told what to lint
+if [[ $WITH_MD == 0 && $WITH_PHP == 0 && $WITH_JS == 0 ]]; then
+    WITH_MD=1
+    WITH_PHP=1
+    WITH_JS=1
+fi
+
+# If there's any arguments, the first arg should be the module directory
+MODULE_DIR=$1
+if [[ -z $MODULE_DIR ]]; then
+    MODULE_DIR=$ORIG_DIR
+fi
+
+# Get and validate the config file path
+CONFIG_FILE="${MODULE_DIR}/.doclintrc"
+if ! [[ -f $CONFIG_FILE ]]; then
+    echo "No '.doclintrc' file found at ${MODULE_DIR}"
+    exit 1
+fi
+
+# Get and validate the documentation directory
+DOCS_DIR="${MODULE_DIR}/$(head -n 1 $CONFIG_FILE)"
+if ! [[ $DOCS_DIR == *'/' ]]; then
+  echo "${DOCS_DIR} must end with / in the .doclintrc file"
+  exit 1
+elif ! [[ -d $DOCS_DIR ]]; then
+  echo "${DOCS_DIR} is not a directory"
+  exit 1
+fi
+
+PHP_LINT="${COMPOSER_RUNTIME_BIN_DIR}/mdphpcs"
+
+# change to the docs directory, or else yarn may stop us from linting the files we want to lint
+cd $DOCS_DIR
+
+# Prepare a cleanup function
+cleanup () {
+    rm package.json >/dev/null 2>&1
+    rm yarn.lock >/dev/null 2>&1
+    rm yarn-error.log >/dev/null 2>&1
+    rm .markdownlint-cli2.mjs >/dev/null 2>&1
+    rm .markdownlint.yml >/dev/null 2>&1
+    rm phpcs.xml >/dev/null 2>&1
+    rm .eslintrc.js >/dev/null 2>&1
+    rm -r node_modules/ >/dev/null 2>&1
+}
+
+# If linting markdown or js we need to install the yarn dependencies.
+# These have to be in the directory that holds the docs, or a parent directory of it,
+# otherwise the linting tools will refuse to lint for us.
+if [[ $WITH_MD == 1 || $WITH_JS == 1 ]]; then
+    cp "${DOCS_LINT_DIR}/package.json" package.json
+    yarn install --network-concurrency 1
+    YARN_EXIT=$?
+    if [[ $YARN_EXIT != 0 ]]; then
+        echo "Error installing npm dependencies"
+        cleanup
+        exit $YARN_EXIT
+    fi
+fi
+
+EXIT_CODE=0
+if [[ $DO_FIX == 1 ]]; then
+  FLAGS='--fix'
+fi
+
+# Lint markdown
+if [[ $WITH_MD == 1 ]]; then
+    cp "${DOCS_LINT_DIR}/.markdownlint-cli2.mjs" .markdownlint-cli2.mjs
+    cp "${DOCS_LINT_DIR}/.markdownlint.yml" .markdownlint.yml
+    echo "linting markdown in docs"
+    yarn markdownlint-cli2 "${DOCS_DIR}**/*.md" $FLAGS
+    if [[ $? != 0 ]]; then
+      EXIT_CODE=1
+    fi
+fi
+
+# Lint PHP in docs
+if [[ $WITH_PHP == 1 ]]; then
+    cp "${DOCS_LINT_DIR}/phpcs.xml" phpcs.xml
+    echo "linting php in docs"
+    $PHP_LINT $DOCS_DIR -p --colors --ignore=*/node_modules/* $FLAGS
+    if [[ $? != 0 ]]; then
+      EXIT_CODE=1
+    fi
+fi
+
+# Lint js in docs
+if [[ $WITH_JS == 1 ]]; then
+    cp "${DOCS_LINT_DIR}/.eslintrc.js" .eslintrc.js
+    echo "linting javascript in docs"
+    yarn eslint $DOCS_DIR $FLAGS
+    if [[ $? != 0 ]]; then
+      EXIT_CODE=1
+    fi
+fi
+
+cleanup
+
+if [[ $DO_FIX == 1 ]]; then
+    echo 'Fixed all auto-fixable problems'
+elif [[ $EXIT_CODE == 0 ]]; then
+    echo 'Linting passed successfully'
+fi
+exit $EXIT_CODE
