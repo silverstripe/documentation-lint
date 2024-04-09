@@ -104,7 +104,7 @@ if [[ -z $MODULE_DIR ]]; then
 fi
 
 # If the module directory is not an absolute path, make it one
-if [[ $MODULE_DIR != $ORIG ]] && [[ $MODULE_DIR != "/*" ]]; then
+if [[ $MODULE_DIR != $ORIG_DIR ]] && [[ "$MODULE_DIR/" != $ORIG_DIR ]] && [[ $MODULE_DIR != "/*" ]]; then
     MODULE_DIR="${ORIG_DIR}/${MODULE_DIR}"
 fi
 
