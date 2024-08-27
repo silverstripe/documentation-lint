@@ -18,13 +18,13 @@ jobs:
     env:
       GITHUB_REPOSITORY: ${{ github.repository }}
       BRANCH: ${{ github.ref_name }}
+      LATEST_LOCAL_SHA: ${{ github.sha }}
     steps:
 
       - name: Dispatch tag patch release
         shell: bash
         id: dispatch-tag-patch-release
         run: |
-          LATEST_LOCAL_SHA=$(git rev-parse HEAD)
           echo "LATEST_LOCAL_SHA is $LATEST_LOCAL_SHA"
           # https://docs.github.com/en/rest/actions/workflows?apiVersion=2022-11-28#create-a-workflow-dispatch-event
           RESP_CODE=$(curl -w %{http_code} -s -L -o __response.json \
