@@ -11,7 +11,7 @@
     ],
     "require": {
         "silverstripe/markdown-php-codesniffer": "^1",
-        "slevomat/coding-standard": "^8.14"
+        "slevomat/coding-standard": "^8.15"
     },
     "bin": [
         "bin/doclint"
