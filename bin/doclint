@@ -166,7 +166,7 @@ if [[ $WITH_MD == 1 ]]; then
     cp "${DOCS_LINT_DIR}/.markdownlint-cli2.mjs" .markdownlint-cli2.mjs
     cp "${DOCS_LINT_DIR}/.markdownlint.yml" .markdownlint.yml
     echo "linting markdown in docs"
-    yarn markdownlint-cli2 "${DOCS_DIR}**/*.md" $FLAGS
+    yarn markdownlint-cli2 "${DOCS_DIR}**/*.md" "!**/node_modules/**" $FLAGS
     if [[ $? != 0 ]]; then
       EXIT_CODE=1
     fi
