@@ -105,6 +105,7 @@ enhanced-proper-names:
     - 'silverstripe-' # e.g. "silverstripe-vendormodule"
     - '@silverstripe.org'
     - 'TinyMCE'
+    - 'htmleditor-tinymce' # specifically silverstripe/htmleditor-tinymce
     - 'UI'
     - 'URL'
     - 'YAML'
