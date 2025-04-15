@@ -142,6 +142,19 @@ title-case-style:
     - 'Transifex'
     - 'URLs'
     - 'WebP'
+    # months should have capital letters
+    - 'January'
+    - 'February'
+    - 'March'
+    - 'April'
+    - 'May'
+    - 'June'
+    - 'July'
+    - 'August'
+    - 'September'
+    - 'October'
+    - 'November'
+    - 'December'
 
 # MD033: Allow specific HTML tags
 no-inline-html:
