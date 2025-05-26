@@ -155,3 +155,9 @@ no-inline-html:
     - 'dl'
     - 'dd'
     - 'dt'
+
+# MD037 - Spaces inside emphasis markers
+# There is a changelog commit containing "a _config.php file or _config directory"
+# markdownlint will complain about "r _"
+# There are no optional available to disable just this instance, do we need to disable the entire rule
+no-space-in-emphasis: false
