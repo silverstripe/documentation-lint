@@ -136,6 +136,7 @@ title-case-style:
     - 'Nginx'
     - 'Nginx,'
     - 'PHPUnit'
+    - 'RealMe'
     - 'RFCs'
     - 'Silverstripe'
     - 'TinyMCE'
