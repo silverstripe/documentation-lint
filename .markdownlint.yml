@@ -99,6 +99,7 @@ enhanced-proper-names:
     - 'ORM'
     - 'PHP'
     - 'php-' # e.g. "php-intl extension"
+    - 'RealMe'
     - 'SCSS'
     - 'Silverstripe'
     - 'silverstripe/' # e.g. "silverstripe/framework"
