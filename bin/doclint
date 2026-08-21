@@ -29,7 +29,7 @@ else
 fi
 which yarn >/dev/null 2>&1
 if [[ $? != 0 ]]; then
-    echo 'yarn must be installed for linting to work'
+    echo 'yarn must be available for linting to work (corepack is bundled with node - run `corepack enable`)'
     exit 1
 fi
 which getopt >/dev/null 2>&1
@@ -134,7 +134,7 @@ cd $DOCS_DIR
 cleanup () {
     rm package.json >/dev/null 2>&1
     rm yarn.lock >/dev/null 2>&1
-    rm yarn-error.log >/dev/null 2>&1
+    rm -r .yarn/ >/dev/null 2>&1
     rm .markdownlint-cli2.mjs >/dev/null 2>&1
     rm .markdownlint.yml >/dev/null 2>&1
     rm phpcs.xml >/dev/null 2>&1
@@ -147,7 +147,17 @@ cleanup () {
 # otherwise the linting tools will refuse to lint for us.
 if [[ $WITH_MD == 1 || $WITH_JS == 1 ]]; then
     cp "${DOCS_LINT_DIR}/package.json" package.json
-    yarn install --network-concurrency 1
+    # Marks this directory as its own yarn project so yarn does not walk up to the repo's yarn.lock
+    touch yarn.lock
+    # Configure yarn via env vars rather than a .yarnrc.yml, so that settings from any
+    # parent .yarnrc.yml in the linted repo cannot override what we need here.
+    export YARN_IGNORE_PATH=1
+    export YARN_NODE_LINKER=node-modules
+    export YARN_ENABLE_SCRIPTS=0
+    # Ignore npm versions published less than 7 days ago
+    export YARN_NPM_MINIMAL_AGE_GATE=10080
+    # --no-immutable because this writes the fresh lockfile
+    yarn install --no-immutable
     YARN_EXIT=$?
     if [[ $YARN_EXIT != 0 ]]; then
         echo "Error installing npm dependencies"
