@@ -118,7 +118,6 @@ title-case-style:
   # between words and punctuation
   ignore:
     - 'Apache'
-    - 'APIs'
     - 'Composer'
     - 'CTE'
     - 'GitHub'
@@ -138,11 +137,9 @@ title-case-style:
     - 'Nginx,'
     - 'PHPUnit'
     - 'RealMe'
-    - 'RFCs'
     - 'Silverstripe'
     - 'TinyMCE'
     - 'Transifex'
-    - 'URLs'
     - 'WebP'
     # months should have capital letters
     - 'January'

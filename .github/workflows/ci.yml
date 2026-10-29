@@ -7,10 +7,32 @@ on:
 permissions: {}
 
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - run: corepack enable
+
+      # No lockfile is committed, so a fresh one has to be written
+      - run: yarn install --no-immutable
+        env:
+          YARN_NODE_LINKER: node-modules
+          YARN_ENABLE_SCRIPTS: 0
+
+      - run: yarn test
+
   ci:
-    # This repo has no tests and nothing to lint, so we can't use regular CI.
-    # Instead, just directly dispatch tag release on push, and let that figure it out.
+    # Dispatch tag release on push once tests pass, and let that figure it out.
     name: Dispatch tag patch release
+    needs: test
     runs-on: ubuntu-latest
     if: github.repository_owner == 'silverstripe'
     permissions:
