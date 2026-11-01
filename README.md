@@ -91,3 +91,15 @@ The following flags can be used with the `doclint` script:
 |`--with-php`|`-p`|Lint PHP code blocks|
 
 If any language flag is passed, only the languages that are passed will be linted (or fixed if `--fix` is passed). If no language flags are passed, all languages will be linted.
+
+## Running tests
+
+The tests cover the lint configuration in this repository. From the root of this repository, using the node version in `.nvmrc` and `yarn` (see [required software](#required-software)):
+
+```bash
+yarn install --no-immutable
+```
+
+```bash
+yarn test
+```
